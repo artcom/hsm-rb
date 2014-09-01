@@ -1,0 +1,12 @@
+Gemfile.lock
+pkg
+
+.ruby-version
+.ruby-gemset
+.rvmrc
+
+tmp
+spec/reports
+/coverage/
+/.bundle/
+/.yardoc/
