@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-$:.push File.expand_path('../lib', __FILE__)
+$LOAD_PATH.push File.expand_path('../lib', __FILE__)
 require 'hsm/version'
 
 Gem::Specification.new do |gem|
@@ -13,15 +13,15 @@ Gem::Specification.new do |gem|
 
   gem.files = Dir['lib/hsm.rb',
                   'lib/hsm/**/*']
-  gem.test_files = Dir['spec/**/*', 'Rakefile', 'lib/tasks/**/*']-Dir['spec/reports/*']
+  gem.test_files = Dir['spec/**/*', 'Rakefile', 'lib/tasks/**/*'] - Dir['spec/reports/*']
   gem.require_paths = ['lib']
 
-  %w{}.each do |dep|
+  %w().each do |dep|
     gem.add_runtime_dependency(dep)
   end
 
-  %w{command ci_reporter geminabox-rake chromatic guard-rspec debugger
-     simplecov-rcov yard guard-bundler guard-rubocop rubocop-checkstyle_formatter}.each do |dep|
+  %w(command ci_reporter geminabox-rake chromatic guard-rspec debugger
+     simplecov-rcov yard guard-bundler guard-rubocop guard-shell rubocop-checkstyle_formatter).each do |dep|
     gem.add_development_dependency(dep)
   end
 end
