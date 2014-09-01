@@ -29,7 +29,7 @@ else
   puts ' * NOT Performing coverage via simplecov'.yellow
 end
 
-# our app/gem
+# our app/gem (simply require it - will work because of bundler/setup)
 require 'hsm'
 
 RSpec.configure do |config|
