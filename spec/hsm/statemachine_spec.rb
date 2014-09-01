@@ -21,6 +21,10 @@ module HSM
       end
     }
 
+    it 'disallows events being processed when uninitialized' do
+      expect{ ss.handle_event :foo }.to raise_error(Uninitialized)
+    end
+
     context 'simple statemachine' do
       before { ss.setup }
 
@@ -50,6 +54,7 @@ module HSM
         # Events / Transitions:
         #  :powered_on  --power_off--> :powered_off
         #  :powered_off --power_on-->  :powered_on
+        #  ss events
         StateMachine.new do |sm|
           sm.add_state(:powered_off) do |s|
             s.add_handler(:power_on) { next :powered_on }
@@ -85,7 +90,7 @@ module HSM
           expect(sub.state.sub.state.id).to eq(:on)
         end
         it 'has a submachine that resets to :on when repowered' do
-          sub.handle_event :toggle # sumachine is now :off
+          sub.handle_event :toggle # submachine is now :off
           sub.handle_event :power_off
           sub.handle_event :power_on
           expect(sub.state.sub.state.id).to eq(:on)

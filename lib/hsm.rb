@@ -3,4 +3,6 @@ module HSM
   require 'hsm/sub'
   require 'hsm/parallel'
   require 'hsm/statemachine'
+
+  class Uninitialized < Exception; end
 end

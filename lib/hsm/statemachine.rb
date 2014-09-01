@@ -9,6 +9,7 @@ module HSM
     end
 
     def handle_event(event, *data)
+      fail Uninitialized unless @state
       if @state.handler.include?(event)
         @logger.debug "handle_event #{event}" unless @logger.nil?
         next_state_id, args = @state.handler[event].call(*data)
