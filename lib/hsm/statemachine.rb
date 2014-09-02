@@ -25,6 +25,7 @@ module HSM
     end
 
     def setup
+      fail Uninitialized if @states.empty?
       switch_state(@states.first)
     end
 

@@ -22,7 +22,14 @@ module HSM
     }
 
     it 'disallows events being processed when uninitialized' do
-      expect{ ss.handle_event :foo }.to raise_error(Uninitialized)
+      expect { ss.handle_event :foo }.to raise_error(Uninitialized)
+    end
+
+    context 'empty statemachine' do
+      it 'cannot start' do
+        statemachine = StateMachine.new
+        expect { statemachine.setup }.to raise_error(Uninitialized)
+      end
     end
 
     context 'simple statemachine' do
