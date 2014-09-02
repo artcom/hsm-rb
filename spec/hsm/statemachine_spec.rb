@@ -58,19 +58,27 @@ module HSM
       expect { ss.add_sub(:foo, ss) }.to raise_error(SelfNesting)
     end
 
-    # it 'disallows two identically named stated being added' do
-    #   sm = StateMachine.new
-    #   sm.add_state :angora_rabbit do |s|
-    #     s.on_enter { puts '1' }
-    #     s.add_handler(:do) { next :angora_rabbit }
+    it 'disallows two identically named states being added' do
+      sm = StateMachine.new
+      sm.add_state :angora_rabbit
+      expect { sm.add_state :angora_rabbit }.to raise_error(StateIdConflict)
+    end
+
+    it 'disallows two identically named states being added even when one name was given as string' do
+      sm = StateMachine.new
+      sm.add_state :angora_rabbit
+      expect { sm.add_state 'angora_rabbit' }.to raise_error(StateIdConflict)
+    end
+
+    # it 'disallows switching to unknown states' do
+    #   statemachine = StateMachine.new do |sm|
+    #     sm.add_state(:first) do |s|
+    #       s.add_handler(:foo) { next :bar }
+    #     end
     #   end
-    #   sm.add_state :angora_rabbit do |s|
-    #     s.on_enter { puts '2' }
-    #     s.add_handler(:do) { next :angora_rabbit }
-    #   end
-    #   sm.setup
-    #   puts sm.states.map(&:id).inspect
-    #   sm.handle_event :do
+    #   statemachine.setup
+    #   statemachine.handle_event(:foo)
+    #   puts statemachine.inspect
     # end
 
     context 'empty statemachine' do

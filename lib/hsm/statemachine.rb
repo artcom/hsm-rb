@@ -35,6 +35,7 @@ module HSM
     def add_state(state_id, &init)
       fail Initialized if @state
       new_state = State.new state_id, &init
+      fail StateIdConflict if @states.map(&:id).index new_state.id
       @states << new_state
       new_state
     end
