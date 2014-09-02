@@ -7,7 +7,8 @@ module HSM
   %i(Uninitialized
      Initialized
      SelfNesting
-     StateIdConflict).each do |class_name|
+     StateIdConflict
+     UnknownState).each do |class_name|
     klass = Class.new(Exception)
     const_set class_name, klass
   end

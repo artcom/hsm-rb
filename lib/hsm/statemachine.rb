@@ -18,6 +18,7 @@ module HSM
           switch_state(next_state, args)
         else
           @logger.error "Unknown state '#{next_state_id}' returned from handler" unless @logger.nil?
+          fail UnknownState
         end
       elsif @state.is_a? Sub
         @state.handle_event event, *data

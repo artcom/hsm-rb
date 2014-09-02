@@ -15,7 +15,7 @@ module HSM
     end
 
     def exit
-      @on_exit.call() unless @on_exit.nil?
+      @on_exit.call unless @on_exit.nil?
     end
 
     def add_handler(event, &block)

@@ -70,16 +70,17 @@ module HSM
       expect { sm.add_state 'angora_rabbit' }.to raise_error(StateIdConflict)
     end
 
-    # it 'disallows switching to unknown states' do
-    #   statemachine = StateMachine.new do |sm|
-    #     sm.add_state(:first) do |s|
-    #       s.add_handler(:foo) { next :bar }
-    #     end
-    #   end
-    #   statemachine.setup
-    #   statemachine.handle_event(:foo)
-    #   puts statemachine.inspect
-    # end
+    it 'disallows switching to unknown states' do
+      statemachine = StateMachine.new do |sm|
+        sm.add_state(:first) do |s|
+          s.add_handler(:foo) {
+            next :bar
+          }
+        end
+      end
+      statemachine.setup
+      expect { statemachine.handle_event(:foo) }.to raise_error(UnknownState)
+    end
 
     context 'empty statemachine' do
       it 'cannot start' do
