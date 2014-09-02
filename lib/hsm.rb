@@ -4,5 +4,11 @@ module HSM
   require 'hsm/parallel'
   require 'hsm/statemachine'
 
-  class Uninitialized < Exception; end
+  %i(Uninitialized
+     Initialized
+     SelfNesting
+     StateIdConflict).each do |class_name|
+    klass = Class.new(Exception)
+    const_set class_name, klass
+  end
 end

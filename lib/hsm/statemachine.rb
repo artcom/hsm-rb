@@ -1,6 +1,6 @@
 module HSM
   class StateMachine
-    attr_reader :state
+    attr_reader :state, :states
 
     def initialize
       @state = nil
@@ -32,13 +32,19 @@ module HSM
     def teardown
     end
 
-    def add_state(state, &init)
-      new_state = State.new state, &init
+    def add_state(state_id, &init)
+      fail Initialized if @state
+      new_state = State.new state_id, &init
       @states << new_state
+      new_state
     end
 
     def add_sub(state, sub, &init)
-      @states << Sub.new(state, sub, &init)
+      fail Initialized if @state
+      fail SelfNesting if self.equal?(sub)
+      new_sub = Sub.new(state, sub, &init)
+      @states << new_sub
+      new_sub
     end
 
     private

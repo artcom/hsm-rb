@@ -21,9 +21,57 @@ module HSM
       end
     }
 
+    let(:sub) {
+      # Additional switch over the simple statemachine.
+      # with states
+      #   :powered_on (the simple Statemachine) and
+      #   :powered_off (just a state)
+      #
+      # Events / Transitions:
+      #  :powered_on  --power_off--> :powered_off
+      #  :powered_off --power_on-->  :powered_on
+      #  ss events
+      StateMachine.new do |sm|
+        sm.add_state(:powered_off) do |s|
+          s.add_handler(:power_on) { next :powered_on }
+        end
+        sm.add_sub(:powered_on, ss) do |s|
+          s.add_handler(:power_off) { next :powered_off }
+        end
+      end
+    }
+
     it 'disallows events being processed when uninitialized' do
       expect { ss.handle_event :foo }.to raise_error(Uninitialized)
     end
+
+    it 'returns state when add_state is called' do
+      expect(ss.add_state(:foo)).to be_a(State)
+    end
+
+    it 'returns submachine when add_sub is called' do
+      statemachine = StateMachine.new
+      expect(statemachine.add_sub(:foo, ss)).to be_a(Sub)
+    end
+
+    it 'disallows statemachines to be added to themselves as sub statemachines' do
+      expect { ss.add_sub(:foo, ss) }.to raise_error(SelfNesting)
+    end
+
+    # it 'disallows two identically named stated being added' do
+    #   sm = StateMachine.new
+    #   sm.add_state :angora_rabbit do |s|
+    #     s.on_enter { puts '1' }
+    #     s.add_handler(:do) { next :angora_rabbit }
+    #   end
+    #   sm.add_state :angora_rabbit do |s|
+    #     s.on_enter { puts '2' }
+    #     s.add_handler(:do) { next :angora_rabbit }
+    #   end
+    #   sm.setup
+    #   puts sm.states.map(&:id).inspect
+    #   sm.handle_event :do
+    # end
 
     context 'empty statemachine' do
       it 'cannot start' do
@@ -49,29 +97,14 @@ module HSM
         ss.handle_event :toggle
         expect(ss.state.id).to eq(:on)
       end
+
+      it 'disallows modification when already initialized' do
+        expect { ss.add_state(:fuzzy) }.to raise_error(Initialized)
+        expect { ss.add_sub(:sub_rosa, StateMachine.new) }.to raise_error(Initialized)
+      end
     end
 
     context 'sub statemachine' do
-      let(:sub) {
-        # Additional switch over the simple statemachine.
-        # with states
-        #   :powered_on (the simple Statemachine) and
-        #   :powered_off (just a state)
-        #
-        # Events / Transitions:
-        #  :powered_on  --power_off--> :powered_off
-        #  :powered_off --power_on-->  :powered_on
-        #  ss events
-        StateMachine.new do |sm|
-          sm.add_state(:powered_off) do |s|
-            s.add_handler(:power_on) { next :powered_on }
-          end
-          sm.add_sub(:powered_on, ss) do |s|
-            s.add_handler(:power_off) { next :powered_off }
-          end
-        end
-      }
-
       before { sub.setup }
 
       it 'is initially powered off' do
