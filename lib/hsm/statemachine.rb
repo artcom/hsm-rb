@@ -35,6 +35,8 @@ module HSM
     end
 
     def teardown
+      @state.exit if @state
+      @state = nil
     end
 
     def add_state(state)

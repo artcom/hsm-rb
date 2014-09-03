@@ -1,22 +1,67 @@
 require 'spec_helper'
 
 module HSM
+  class Recorder
+    attr_accessor :events
+    def initialize
+      @events = []
+    end
+  end
+
+  class CustomState < State
+    attr_accessor :calls, :recorder
+
+    def initialize(*args)
+      super
+      @calls = []
+    end
+  end
+
+  class CustomSub < Sub
+    attr_accessor :calls, :recorder
+
+    def initialize(*args)
+      super
+      @calls = []
+    end
+  end
+
   describe StateMachine do
 
     it 'can be instantiated empty' do
       expect(subject).to be_a(StateMachine)
     end
 
+    let(:recorder) { Recorder.new }
+
     let(:ss) {
       # Simple Statemachine with states :on and :off
       # :on  --toggle--> :off
       # :off --toggle--> :off
       StateMachine.new do |sm|
-        sm.add_state(State.new(:on) do |s|
+        sm.add_state(CustomState.new(:on) do |s|
+          s.on_enter { |_data|
+            s.calls << ':on on_enter'
+            s.recorder.events << ':on on_enter' if s.recorder
+          }
+          s.on_exit { |_data|
+            s.calls << ':on on_exit'
+            s.recorder.events << ':on on_exit' if s.recorder
+          }
+
           s.add_handler(:toggle) { next :off }
           s.add_handler(:noop) { nil }
         end)
-        sm.add_state(State.new(:off) do |s|
+        sm.add_state(CustomState.new(:off) do |s|
+          s.on_enter { |_data|
+            s.calls << ':off on_enter'
+            s.recorder.events << ':off on_enter' if s.recorder
+          }
+          s.on_exit { |_data|
+            s.calls << ':off on_exit'
+            s.recorder.events << ':off on_exit' if s.recorder
+          }
+
           s.add_handler(:toggle) { next :on }
         end)
       end
@@ -38,8 +83,15 @@ module HSM
             next :powered_on
           }
         end)
-        sm.add_state(Sub.new(:powered_on, ss) do |s|
-          # s.on_enter { |data| puts "ON_ENTER #{s.inspect} #{data.inspect}\n"}
+        sm.add_state(CustomSub.new(:powered_on, ss) do |s|
+          s.on_enter { |_data|
+            s.calls << ':powered_on on_enter'
+            s.recorder.events << ':powered_on on_enter' if s.recorder
+          }
+          s.on_exit { |_data|
+            s.calls << ':powered_on on_exit'
+            s.recorder.events << ':powered_on on_exit' if s.recorder
+          }
           s.add_handler(:power_off) { next :powered_off }
         end)
       end
@@ -106,6 +158,13 @@ module HSM
         expect(ss.state.id).to eq(:off)
       end
 
+      it 'get its on_enter/on_exit handlers called' do
+        expect(ss.state.calls).to eq([':on on_enter'])
+        ss.handle_event :toggle
+        expect(ss.states.first.calls).to eq([':on on_enter', ':on on_exit'])
+        expect(ss.state.calls).to eq([':off on_enter'])
+      end
+
       it 'can be toggled :off and :on again' do
         ss.handle_event :toggle
         ss.handle_event :toggle
@@ -124,6 +183,8 @@ module HSM
 
     context 'sub statemachine' do
       before {
+        sub.states.last.recorder = recorder
+        sub.states.last.sub.states.first.recorder = recorder
         sub.setup
       }
 
@@ -137,23 +198,44 @@ module HSM
         it 'is on' do
           expect(sub.state.id).to eq(:powered_on)
         end
-        it 'has a submachine which is initially :on' do
-          expect(sub.state.sub.state.id).to eq(:on)
+
+        it 'can be powered off and enter/exit handlers get called in correct order' do
+          sub.handle_event :power_off
+          expect(sub.state.id).to eq(:powered_off)
+          expect(recorder.events).to eq([
+            ':powered_on on_enter',
+            ':on on_enter',
+            ':on on_exit',
+            ':powered_on on_exit'
+          ])
         end
+
+        it 'has a submachine which is initially :on and its on_enter_called' do
+          expect(sub.state.sub.state.id).to eq(:on)
+          expect(sub.state.calls).to eq([':powered_on on_enter'])
+        end
+
         it 'has a submachine which can be toggled :off' do
           sub.handle_event :toggle
           expect(sub.state.sub.state.id).to eq(:off)
         end
+
         it 'has a submachine which can be toggled :off and :on again' do
           sub.handle_event :toggle
           sub.handle_event :toggle
           expect(sub.state.sub.state.id).to eq(:on)
         end
+
         it 'has a submachine that resets to :on when repowered' do
           sub.handle_event :toggle # submachine is now :off
           sub.handle_event :power_off
           sub.handle_event :power_on
           expect(sub.state.sub.state.id).to eq(:on)
+          expect(sub.state.calls).to eq([
+            ':powered_on on_enter',
+            ':powered_on on_exit',
+            ':powered_on on_enter'
+          ])
         end
       end
     end
