@@ -14,6 +14,7 @@ module HSM
       StateMachine.new do |sm|
         sm.add_state(:on) do |s|
           s.add_handler(:toggle) { next :off }
+          s.add_handler(:noop) { nil }
         end
         sm.add_state(:off) do |s|
           s.add_handler(:toggle) { next :on }
@@ -110,6 +111,11 @@ module HSM
       it 'disallows modification when already initialized' do
         expect { ss.add_state(:fuzzy) }.to raise_error(Initialized)
         expect { ss.add_sub(:sub_rosa, StateMachine.new) }.to raise_error(Initialized)
+      end
+
+      it 'permits handling events without switching state' do
+        ss.handle_event :noop
+        expect(ss.state.id).to eq(:on)
       end
     end
 

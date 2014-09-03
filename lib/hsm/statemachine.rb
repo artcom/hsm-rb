@@ -13,6 +13,10 @@ module HSM
       if @state.handler.include?(event)
         @logger.debug "handle_event #{event}" unless @logger.nil?
         next_state_id, args = @state.handler[event].call(*data)
+
+        # Allow states to handle events without switching states
+        return if next_state_id.nil?
+
         next_state = (@states.select { |s| s.id == next_state_id }).first
         if next_state
           switch_state(next_state, args)
