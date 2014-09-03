@@ -37,20 +37,13 @@ module HSM
     def teardown
     end
 
-    def add_state(state_id, &init)
+    def add_state(state)
+      fail BlockGiven if block_given?
       fail Initialized if @state
-      new_state = State.new state_id, &init
-      fail StateIdConflict if @states.map(&:id).index new_state.id
-      @states << new_state
-      new_state
-    end
-
-    def add_sub(state, sub, &init)
-      fail Initialized if @state
-      fail SelfNesting if self.equal?(sub)
-      new_sub = Sub.new(state, sub, &init)
-      @states << new_sub
-      new_sub
+      fail NotAState unless state.is_a?(State)
+      fail StateIdConflict if @states.map(&:id).index state.id
+      @states << state
+      state # TODO: maybe remove? or replace with chaining mechanisms...
     end
 
     private

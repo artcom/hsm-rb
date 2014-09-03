@@ -8,11 +8,13 @@ module HSM
     end
 
     def enter(_prev_state, _data = {})
+      super
       @sub.setup
     end
 
     def exit
       @sub.teardown
+      super
     end
 
     def handle_event(*args)
