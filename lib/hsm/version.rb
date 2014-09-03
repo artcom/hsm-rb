@@ -1,5 +1,5 @@
 module HSM
-  VERSION = '0.3'
+  VERSION = '0.4'
 
   def self.version
     VERSION
