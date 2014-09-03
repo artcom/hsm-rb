@@ -86,7 +86,7 @@ module HSM
     context 'empty statemachine' do
       it 'cannot start' do
         statemachine = StateMachine.new
-        expect { statemachine.setup }.to raise_error(Uninitialized)
+        expect { statemachine.setup }.to raise_error(NoStates)
       end
     end
 
