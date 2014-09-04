@@ -5,11 +5,25 @@ module HSM
     def initialize
       @state = nil
       @states = []
+
+      @event_in_progress = false
+      @event_queue = []
       yield self if block_given?
     end
 
-    def handle_event(event, *data)
+    def handle_event(*args)
       fail Uninitialized unless @state
+      @event_queue << args
+      if @event_in_progress
+        @logger.trace "Events queued #{@event_queue.size}" if @logger
+      else
+        @event_in_progress = true
+        _handle_event(*@event_queue.shift) until @event_queue.empty?
+        @event_in_progress = false
+      end
+    end
+
+    def _handle_event(event, *data)
       if @state.handler.include?(event)
         @logger.debug "handle_event #{event}" unless @logger.nil?
         next_state_id, args = @state.handler[event].call(*data)
@@ -21,7 +35,7 @@ module HSM
         if next_state
           switch_state(next_state, args)
         else
-          @logger.error "Unknown state '#{next_state_id}' returned from handler" unless @logger.nil?
+          @logger.error "Unknown state '#{next_state_id}' returned from handler" if @logger
           fail UnknownState
         end
       elsif @state.is_a? Sub
@@ -51,7 +65,7 @@ module HSM
     private
 
     def switch_state(next_state, args = {})
-      @logger.debug "switching state #{@state ? @state.id : 'nil'} -> #{next_state ? next_state.id : 'nil'}" unless @logger.nil?
+      @logger.debug "switching state #{@state ? @state.id : 'nil'} -> #{next_state ? next_state.id : 'nil'}" if @logger
       @state.exit if @state
       old_state = @state
       @state = next_state

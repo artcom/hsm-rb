@@ -44,7 +44,7 @@ module HSM
             s.calls << ':on on_enter'
             s.recorder.events << ':on on_enter' if s.recorder
           }
-          s.on_exit { |_data|
+          s.on_exit {
             s.calls << ':on on_exit'
             s.recorder.events << ':on on_exit' if s.recorder
           }
@@ -57,7 +57,7 @@ module HSM
             s.calls << ':off on_enter'
             s.recorder.events << ':off on_enter' if s.recorder
           }
-          s.on_exit { |_data|
+          s.on_exit {
             s.calls << ':off on_exit'
             s.recorder.events << ':off on_exit' if s.recorder
           }
@@ -178,6 +178,31 @@ module HSM
       it 'permits handling events without switching state' do
         ss.handle_event :noop
         expect(ss.state.id).to eq(:on)
+      end
+
+      it 'passed data of events correctly' do
+        ss.states.first.add_handler(:with_data) { |data|
+          recorder.events << data
+          nil
+        }
+        data = { foo: 'bar', gaga: 2 }
+        ss.handle_event :with_data, data
+        expect(recorder.events.first).to eq(data)
+      end
+
+      it 'runs to completion in case of nested handle_event calls' do
+        ss.states.first.add_handler(:first) {
+          recorder.events << 'first pre'
+          ss.handle_event :second
+          recorder.events << 'first post'
+          next :on
+        }
+        ss.states.first.add_handler(:second) {
+          recorder.events << 'second'
+          nil
+        }
+        ss.handle_event :first
+        expect(recorder.events).to eq(['first pre', 'first post', 'second'])
       end
     end
 
