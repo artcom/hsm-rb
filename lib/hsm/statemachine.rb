@@ -38,7 +38,7 @@ module HSM
           @logger.error "Unknown state '#{next_state_id}' returned from handler" if @logger
           fail UnknownState
         end
-      elsif @state.is_a? Sub
+      elsif @state.is_a?(Sub) || @state.is_a?(Parallel)
         @state.handle_event event, *data
       end
     end
