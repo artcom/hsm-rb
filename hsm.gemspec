@@ -20,7 +20,7 @@ Gem::Specification.new do |gem|
     gem.add_runtime_dependency(dep)
   end
 
-  %w(command ci_reporter geminabox-rake chromatic guard-rspec debugger
+  %w(command ci_reporter geminabox-rake chromatic guard-rspec
      simplecov-rcov yard guard-bundler guard-rubocop guard-shell rubocop-checkstyle_formatter).each do |dep|
     gem.add_development_dependency(dep)
   end
