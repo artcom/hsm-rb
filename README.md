@@ -36,14 +36,10 @@ Then install all required gems via
 ## License
 Please consult the `License` file.
 
-# TODO
+# TODO 
 
-* Add guards, actions and target
-* Add LCA (Lowest cost common ancestor)
-* Review event bubbling
-* Add Fork/Join
+Please see issue tracker.
+
 * Add visualization
 * Make state machine inspection simpler
 * Revisit syntax (DSL ?), structure
-
-* Handle / Trigger / Transition / Emit
