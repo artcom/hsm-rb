@@ -18,7 +18,7 @@ module HSM
     end
 
     def handle_event(*args)
-      @sub.handle_event(*args)
+      @sub._handle_event(*args)
     end
   end
 end
