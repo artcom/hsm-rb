@@ -1,5 +1,8 @@
 # Hierarchical Statemachine for Ruby
 
+[![Build Status](https://img.shields.io/travis/artcom/hsm-rb/master.svg?style=flat)](https://travis-ci.org/artcom/hsm-rb)
+
+
 Reference is http://en.wikipedia.org/wiki/UML_state_machine
 
 ## Developer Setup
