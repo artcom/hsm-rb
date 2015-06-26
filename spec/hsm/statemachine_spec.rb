@@ -26,6 +26,15 @@ module HSM
     end
   end
 
+  class CustomParallel < Parallel
+    attr_accessor :calls, :recorder
+
+    def initialize(*args)
+      super
+      @calls = []
+    end
+  end
+
   describe StateMachine do
 
     it 'can be instantiated empty' do
@@ -51,6 +60,11 @@ module HSM
 
           s.add_handler(:toggle) { next :off }
           s.add_handler(:noop) { nil }
+          s.add_handler(:check) {
+            s.calls << ':on check'
+            s.recorder.events << ':on check' if s.recorder
+            nil
+          }
         end)
         sm.add_state(CustomState.new(:off) do |s|
           s.on_enter { |_data|
@@ -63,6 +77,11 @@ module HSM
           }
 
           s.add_handler(:toggle) { next :on }
+          s.add_handler(:check) {
+            s.calls << ':off check'
+            s.recorder.events << ':off check' if s.recorder
+            nil
+          }
         end)
       end
     }
@@ -78,9 +97,14 @@ module HSM
       #  :powered_off --power_on-->  :powered_on
       #  ss events
       StateMachine.new do |sm|
-        sm.add_state(State.new(:powered_off) do |s|
+        sm.add_state(CustomState.new(:powered_off) do |s|
           s.add_handler(:power_on) {
             next :powered_on
+          }
+          s.add_handler(:check) {
+            s.calls << ':powered_off check'
+            s.recorder.events << ':powered_off check' if s.recorder
+            nil
           }
         end)
         sm.add_state(CustomSub.new(:powered_on, ss) do |s|
@@ -93,6 +117,61 @@ module HSM
             s.recorder.events << ':powered_on on_exit' if s.recorder
           }
           s.add_handler(:power_off) { next :powered_off }
+          s.add_handler(:check) {
+            s.calls << ':powered_on check'
+            s.recorder.events << ':powered_on check' if s.recorder
+            nil
+          }
+          s.add_handler(:super_check) {
+            s.calls << ':powered_on super_check'
+            s.recorder.events << ':powered_on super_check' if s.recorder
+            nil
+          }
+        end)
+      end
+    }
+
+    let(:parallelSM) {
+
+      parallelA = StateMachine.new do |sm|
+        sm.add_state(CustomState.new(:a1) do |s|
+          s.add_handler(:check) {
+            s.calls << ':a1 check'
+            s.recorder.events << ':a1 check' if s.recorder
+            nil
+          }
+        end)
+      end
+
+      parallelB = StateMachine.new do |sm|
+        sm.add_state(CustomState.new(:b1) do |s|
+          s.add_handler(:check) {
+            s.calls << ':b1 check'
+            s.recorder.events << ':b1 check' if s.recorder
+            nil
+          }
+        end)
+      end
+
+      StateMachine.new do |sm|
+        sm.add_state(CustomParallel.new(:x, [parallelA, parallelB]) do |p|
+          p.add_handler(:check) {
+            p.calls << ':x check'
+            p.recorder.events << ':x check' if p.recorder
+            nil
+          }
+          p.add_handler(:para_check) {
+            p.calls << ':x para_check'
+            p.recorder.events << ':x para_check' if p.recorder
+            nil
+          }
+        end)
+        sm.add_state(CustomState.new(:y) do |s|
+          s.add_handler(:check) {
+            s.calls << ':b1 check'
+            s.recorder.events << ':b1 check' if s.recorder
+            nil
+          }
         end)
       end
     }
@@ -264,5 +343,46 @@ module HSM
         end
       end
     end
+    
+    context 'sub event handling' do
+      before {
+        sub.states.last.recorder = recorder
+        sub.states.last.sub.states.first.recorder = recorder
+        sub.setup
+      }
+
+      it 'will hand the check event to the lowest state available in the configuration' do
+        sub.handle_event :power_on
+        sub.handle_event :check
+        sub.handle_event :super_check
+        expect(recorder.events).to eq([
+          ':powered_on on_enter',
+          ':on on_enter',
+          ':on check',
+          ':powered_on super_check'
+        ])
+      end
+    end
+
+    context 'parallel event handling' do
+      before {
+        parallelSM.states.first.recorder = recorder
+        parallelSM.states.last.recorder = recorder
+        parallelSM.states.first.subs.first.states.first.recorder = recorder
+        parallelSM.states.first.subs.last.states.first.recorder = recorder
+        parallelSM.setup
+      }
+
+      it 'will hand the check event to the lowest state available in the parallel configuration and bubble up if necessary' do
+        parallelSM.handle_event :check
+        parallelSM.handle_event :para_check
+        expect(recorder.events).to eq([
+          ':a1 check',
+          ':b1 check',
+          ':x para_check'
+        ])
+      end
+    end
+
   end
 end

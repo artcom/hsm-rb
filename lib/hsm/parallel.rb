@@ -22,9 +22,13 @@ module HSM
     end
 
     def handle_event(*args)
+      handled = false;
       @subs.each do |sub|
-        sub.handle_event(*args)
+        if sub._handle_event(*args) == true
+          handled = true
+        end
       end
+      return handled
     end
   end
 end
