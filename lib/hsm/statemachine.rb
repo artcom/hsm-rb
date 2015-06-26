@@ -1,14 +1,24 @@
 module HSM
   class StateMachine
     attr_reader :state, :states
+    attr_accessor :container
 
     def initialize
       @state = nil
       @states = []
+      @container = nil
 
       @event_in_progress = false
       @event_queue = []
       yield self if block_given?
+    end
+
+    def path
+      path = Array[self];
+      unless path[0].container.nil?
+        path.unshift(path[0].container.owner)
+      end
+      path
     end
 
     def handle_event(*args)
@@ -63,6 +73,7 @@ module HSM
       fail Initialized if @state
       fail NotAState unless state.is_a?(State)
       fail StateIdConflict if @states.map(&:id).index state.id
+      state.owner = self
       @states << state
       state # TODO: maybe remove? or replace with chaining mechanisms...
     end

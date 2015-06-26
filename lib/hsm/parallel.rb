@@ -5,6 +5,9 @@ module HSM
     def initialize(id, sub_machines, &init)
       super id, &init
       @subs = sub_machines
+      @subs.each do |sub|
+        sub.container = self
+      end
     end
 
     def enter(_prev_state, _data = {})

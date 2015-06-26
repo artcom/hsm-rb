@@ -43,46 +43,54 @@ module HSM
 
     let(:recorder) { Recorder.new }
 
+    let(:on) {
+      CustomState.new("on") do |s|
+        s.on_enter { |_data|
+          s.calls << ':on on_enter'
+          s.recorder.events << ':on on_enter' if s.recorder
+        }
+        s.on_exit {
+          s.calls << ':on on_exit'
+          s.recorder.events << ':on on_exit' if s.recorder
+        }
+
+        s.add_handler(:toggle) { next :off }
+        s.add_handler(:noop) { nil }
+        s.add_handler(:check) {
+          s.calls << ':on check'
+          s.recorder.events << ':on check' if s.recorder
+          nil
+        }
+      end
+    }
+
+    let(:off) {
+      CustomState.new("off") do |s|
+        s.on_enter { |_data|
+          s.calls << ':off on_enter'
+          s.recorder.events << ':off on_enter' if s.recorder
+        }
+        s.on_exit {
+          s.calls << ':off on_exit'
+          s.recorder.events << ':off on_exit' if s.recorder
+        }
+
+        s.add_handler(:toggle) { next :on }
+        s.add_handler(:check) {
+          s.calls << ':off check'
+          s.recorder.events << ':off check' if s.recorder
+          nil
+        }
+      end
+    }
+
     let(:ss) {
       # Simple Statemachine with states :on and :off
       # :on  --toggle--> :off
       # :off --toggle--> :off
       StateMachine.new do |sm|
-        sm.add_state(CustomState.new(:on) do |s|
-          s.on_enter { |_data|
-            s.calls << ':on on_enter'
-            s.recorder.events << ':on on_enter' if s.recorder
-          }
-          s.on_exit {
-            s.calls << ':on on_exit'
-            s.recorder.events << ':on on_exit' if s.recorder
-          }
-
-          s.add_handler(:toggle) { next :off }
-          s.add_handler(:noop) { nil }
-          s.add_handler(:check) {
-            s.calls << ':on check'
-            s.recorder.events << ':on check' if s.recorder
-            nil
-          }
-        end)
-        sm.add_state(CustomState.new(:off) do |s|
-          s.on_enter { |_data|
-            s.calls << ':off on_enter'
-            s.recorder.events << ':off on_enter' if s.recorder
-          }
-          s.on_exit {
-            s.calls << ':off on_exit'
-            s.recorder.events << ':off on_exit' if s.recorder
-          }
-
-          s.add_handler(:toggle) { next :on }
-          s.add_handler(:check) {
-            s.calls << ':off check'
-            s.recorder.events << ':off check' if s.recorder
-            nil
-          }
-        end)
+        sm.add_state(on)
+        sm.add_state(off)
       end
     }
 
@@ -382,6 +390,19 @@ module HSM
           ':x para_check'
         ])
       end
+    end
+
+    context 'state nesting and hierarchy' do
+
+      before {
+        sub.setup
+      }
+
+      it 'returns its path inside the hierarchy' do
+        path = on.owner.path
+        expect(path.length).to eq(2)
+      end
+
     end
 
   end
