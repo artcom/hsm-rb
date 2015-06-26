@@ -122,9 +122,9 @@ module HSM
             s.recorder.events << ':powered_on check' if s.recorder
             nil
           }
-          s.add_handler(:sub_check) {
-            s.calls << ':powered_on sub_check'
-            s.recorder.events << ':powered_on sub_check' if s.recorder
+          s.add_handler(:super_check) {
+            s.calls << ':powered_on super_check'
+            s.recorder.events << ':powered_on super_check' if s.recorder
             nil
           }
         end)
@@ -354,12 +354,12 @@ module HSM
       it 'will hand the check event to the lowest state available in the configuration' do
         sub.handle_event :power_on
         sub.handle_event :check
-        sub.handle_event :sub_check
+        sub.handle_event :super_check
         expect(recorder.events).to eq([
           ':powered_on on_enter',
           ':on on_enter',
           ':on check',
-          ':powered_on sub_check'
+          ':powered_on super_check'
         ])
       end
     end
@@ -373,7 +373,7 @@ module HSM
         parallelSM.setup
       }
 
-      it 'will hand the check event to the lowest state available in the parallel configuration' do
+      it 'will hand the check event to the lowest state available in the parallel configuration and bubble up if necessary' do
         parallelSM.handle_event :check
         parallelSM.handle_event :para_check
         expect(recorder.events).to eq([
