@@ -5,3 +5,6 @@ rvm:
 install: bundle install
 script: 'bundle exec rspec'
 bundler_args: --without development
+branches:
+  only:
+    - master
