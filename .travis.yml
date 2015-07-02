@@ -1,7 +1,10 @@
 language: ruby
 cache: bundler
 rvm:
-    - 2.1.3
+    - '2.0.0'
+    - '2.1'
+    - '2.2'
+    - jruby-head
 install: bundle install
 script: 'bundle exec rspec'
 bundler_args: --without development
